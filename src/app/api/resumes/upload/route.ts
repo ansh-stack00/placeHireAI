@@ -1,8 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Correct bucket name
 const BUCKET = 'resume'
+
+// ── PDF text extraction helper ────────────────────────────────────────────────
+// pdf-parse doesn't have a .default export in its ESM build.
+// We require() it via createRequire to get the CommonJS version safely.
+async function extractPdfText(buffer: Buffer): Promise<string | null> {
+  try {
+    // Use createRequire to load the CJS version of pdf-parse
+    const { createRequire } = await import('module')
+    const require    = createRequire(import.meta.url)
+    const pdfParse   = require('pdf-parse')
+    const parsed     = await pdfParse(buffer)
+    return parsed.text?.slice(0, 8000) ?? null
+  } catch (e) {
+    console.warn('[upload] PDF text extraction failed:', e)
+    return null
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,13 +66,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'File too large. Max 5MB.' }, { status: 400 })
     }
 
-    // Build storage path: user_id/timestamp-filename.pdf
-    const safeName  = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '')
-    const filePath  = `${user.id}/${Date.now()}-${safeName}`
-    const arrayBuf  = await file.arrayBuffer()
-    const buffer    = Buffer.from(arrayBuf)
+    const safeName = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '')
+    const filePath = `${user.id}/${Date.now()}-${safeName}`
+    const arrayBuf = await file.arrayBuffer()
+    const buffer   = Buffer.from(arrayBuf)
 
-    // Upload to Supabase Storage bucket "resume"
+    // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
       .upload(filePath, buffer, {
@@ -72,25 +87,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Extract text from PDF for AI scoring
-    let resumeText: string | null = null
-    try {
-      const pdfParse = (await import('pdf-parse')).default
-      const parsed   = await pdfParse(buffer)
-      resumeText     = parsed.text?.slice(0, 8000) ?? null
-    } catch (e) {
-      // Non-fatal — resume still saved without text
-      console.warn('[upload] PDF text extraction failed:', e)
-    }
+    // Extract text — non-fatal if it fails
+    const resumeText = await extractPdfText(buffer)
 
-    // Save to resumes table — store the file PATH (not a public URL)
-    // We use signed URLs at read time, so we only need the path
+    // Save to DB
     const { data: resume, error: dbError } = await supabase
       .from('resumes')
       .insert({
         user_id:     user.id,
         label:       label.trim(),
-        file_url:    filePath,    // e.g. "abc-123/1700000000-resume.pdf"
+        file_url:    filePath,
         resume_text: resumeText,
       })
       .select()
@@ -98,7 +104,6 @@ export async function POST(req: NextRequest) {
 
     if (dbError) {
       console.error('[upload] db error:', dbError)
-      // Clean up the uploaded file if DB insert failed
       await supabase.storage.from(BUCKET).remove([filePath])
       return NextResponse.json({ error: dbError.message }, { status: 500 })
     }
