@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutGrid, BarChart2, FileText, Settings, LogOut } from 'lucide-react'
+import { LayoutGrid, BarChart2, FileText, Settings, LogOut,FileEdit } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { cn, getInitials } from '@/lib/utils'
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/board',     label: 'Board',     icon: LayoutGrid },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/resumes',   label: 'Resumes',   icon: FileText },
+  { href: '/dashboard/resume-builder', label: 'Resume AI', icon: FileEdit },
   { href: '/dashboard/settings',  label: 'Settings',  icon: Settings },
 ]
 
