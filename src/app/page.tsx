@@ -199,6 +199,13 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-[#FAFAF9] overflow-x-hidden">
 
+      <p className="sr-only">
+      PlaceHire is a free job application tracker for campus students and job switchers.
+      Track every application with a visual Kanban board, prepare for placements with
+      AI company-specific interview prep, match your resume to job descriptions with a
+      scoring tool, and build ATS-friendly resumes — all in one place.
+  </p>
+
       {/* ── Navbar ─────────────────────────────────────────────── */}
       <nav className="fixed top-0 inset-x-0 z-50 glass border-b border-white/60">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
