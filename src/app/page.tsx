@@ -558,10 +558,10 @@ export default function LandingPage() {
                   <Badge className="bg-white/20 text-white border-0 text-[10px] font-semibold">Most popular</Badge>
                 </div>
                 <div className="mb-2">
-                  <span className="font-display text-5xl font-extrabold text-white">₹199</span>
+                  <span className="font-display text-5xl font-extrabold text-white">₹79</span>
                   <span className="text-white/50 text-[13px] ml-2">/ month</span>
                 </div>
-                <p className="text-white/40 text-[11px] mb-8">or ₹1,499/year · save 37%</p>
+                <p className="text-white/40 text-[11px] mb-8">or ₹610/year · save 30%</p>
                 <ul className="space-y-3 mb-8">
                   {[
                     'Unlimited applications',
